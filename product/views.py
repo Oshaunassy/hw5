@@ -4,7 +4,7 @@ from .serializers import ProductSerializers
 from django.http import JsonResponse
 from django.db.models import Count, Avg
 from product.models import Product, Category
-from django.http import Status
+from rest_framework import status
 
 # Create your views here.
 
@@ -23,9 +23,14 @@ def test_api_view(request):
 def product_list_api_view(request):
     if request.method == 'GET':
         product_list = Product.objects.all()
-        data = ProductSerializers(product_list, many=True).data
+        data = ProductSerializers(instance=product_list, many=True).data
         return Response(data=data)
     elif request.method == 'POST':
+        serializer = ProductSerializers(data=request.data)
+        if not serializer.is_valid():
+            return Response(status=status.HTTP_400_BAD_REQUEST,
+                            data={'errors': serializer.errors})
+
         product = request.data.get('product')
         description = request.data.get('description')
         produced = request.data.get('produced')
