@@ -26,6 +26,13 @@ class Category(models.Model):
     def __str__(self):
         return self.name
 
+class Price(models.Model):
+    name = models.DecimalField(max_digits=10, decimal_places=2)
+    description = models.TextField(null=True,blank=True)
+
+    def __str__(self):
+        return self.name
+
 class Review(models.Model):
     text = models.TextField()
     stars = models.IntegerField(i for i in range(1,6))

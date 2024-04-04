@@ -1,12 +1,58 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from .serializers import ProductSerializers
+from .serializers import ProductSerializers, CategorySerializer
 from django.http import JsonResponse
 from django.db.models import Count, Avg
 from product.models import Product, Category
 from rest_framework import status
+from rest_framework.generics import ListAPIView, CreateAPIView, RetrieveUpdateDestroyAPIView, ListCreateAPIView
+from rest_framework.pagination import PageNumberPagination
+from rest_framework.viewsets import ModelViewSet
 
 # Create your views here.
+
+class CategoryAPIViewSet(ModelViewSet):
+    queryset = Category.objects.all()
+    serializer_class = CategorySerializer
+    pagination_class = PageNumberPagination
+    lookup_field = 'id'
+
+class ProductListCreateAPIView(ListCreateAPIView):
+    queryset = Product.objects.select_related('category') \
+        .prefetch_related('reviews', 'category').all()
+    serializer_class = ProductSerializers
+
+    def post(self, request, *args, **kwargs):
+        serializer = ProductSerializers(data=request.data)
+        if not serializer.is_valid():
+            return Response(status=status.HTTP_400_BAD_REQUEST,
+                            data={'errors': serializer.errors})
+
+        product = request.validated_data.get('product')
+        description = request.validated_data.get('description')
+        produced = request.validated_data.get('produced')
+        price = request.validated_data.get('price')
+        category = request.validated_data.get('category')
+
+        product = Product.objects.create(product=product, description=description, produced=produced,
+                                         price=price, category=category)
+        product.category.set(category)
+        product.save()
+
+        return Response(data={'product_id': product.id})
+
+
+class CategoryListAPIView(ListAPIView, CreateAPIView):
+    queryset = Category.objects.all()
+    serializer_class = CategorySerializer
+    pagination_class = PageNumberPagination
+
+
+class CategoryDetailAPIView(RetrieveUpdateDestroyAPIView):
+    queryset = Category.objects.all()
+    serializer_class = CategorySerializer
+    lookup_field = 'id'
+
 
 @api_view(['GET'])
 def test_api_view(request):
@@ -32,11 +78,11 @@ def product_list_api_view(request):
             return Response(status=status.HTTP_400_BAD_REQUEST,
                             data={'errors': serializer.errors})
 
-        product = request.data.get('product')
-        description = request.data.get('description')
-        produced = request.data.get('produced')
-        price = request.data.get('price')
-        category = request.data.get('category')
+        product = request.validated_data.get('product')
+        description = request.validated_data.get('description')
+        produced = request.validated_data.get('produced')
+        price = request.validated_data.get('price')
+        category = request.validated_data.get('category')
 
         product = Product.objects.create(product=product, description=description, produced=produced,
                                          price=price, category=category)
