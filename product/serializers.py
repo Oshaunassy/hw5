@@ -21,6 +21,6 @@ class ProductValidateSerializer(serializers.Serializer):
     title = serializers.CharField(max_length=100, min_length=3)
     description = serializers.CharField(required=False)
     produced = serializers.DateField()
-    price = serializers.DecimalField(required=True)
+    price = serializers.DecimalField(required=True, decimal_places=2, max_digits=10)
     category = serializers.CharField(max_length=100)
 

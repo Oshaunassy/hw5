@@ -21,6 +21,7 @@ def test_api_view(request):
 
 @api_view(['GET', 'POST'])
 def product_list_api_view(request):
+    print(request.user)
     if request.method == 'GET':
         product_list = Product.objects.all()
         data = ProductSerializers(instance=product_list, many=True).data
